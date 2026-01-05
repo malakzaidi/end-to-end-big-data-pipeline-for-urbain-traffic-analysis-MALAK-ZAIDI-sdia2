@@ -1,65 +1,56 @@
 #!/usr/bin/env python3
 """
-Kafka Consumer for Smart City Traffic Data
-Consumes and displays traffic events from Kafka
+Kafka Consumer → HDFS Raw Zone
+Étape 3 : Ingestion des données brutes dans le Data Lake
 """
 
 import json
 from datetime import datetime
 from kafka import KafkaConsumer
-from kafka.errors import KafkaError
 import argparse
 import sys
+import os
+import subprocess
 
-
-class TrafficKafkaConsumer:
-    """
-    Consumes traffic events from Kafka topic
-    """
-    
+class TrafficKafkaConsumerHDFS:
     def __init__(
         self,
         bootstrap_servers: str = 'localhost:9092',
         topic: str = 'traffic-events',
-        group_id: str = 'traffic-consumer-group'
+        group_id: str = 'hdfs-writer-group'
     ):
         self.topic = topic
         self.bootstrap_servers = bootstrap_servers
+        self.hdfs_base = "/data/raw/traffic"
         
-        # Initialize Kafka Consumer
+        # Créer le répertoire de base dans HDFS
+        subprocess.run(["docker", "exec", "namenode", "hdfs", "dfs", "-mkdir", "-p", self.hdfs_base], check=False)
+        
         self.consumer = KafkaConsumer(
             topic,
             bootstrap_servers=bootstrap_servers,
             group_id=group_id,
             value_deserializer=lambda m: json.loads(m.decode('utf-8')),
             key_deserializer=lambda k: k.decode('utf-8') if k else None,
-            # Start from beginning if no offset committed
             auto_offset_reset='earliest',
-            # Commit offsets automatically
             enable_auto_commit=True,
             auto_commit_interval_ms=1000,
-            # Performance settings
             max_poll_records=100,
             session_timeout_ms=30000
         )
         
-        print("✓ Kafka Consumer initialized")
-        print(f"  Bootstrap servers: {bootstrap_servers}")
+        print("Kafka Consumer → HDFS Raw Zone initialisé avec succès")
         print(f"  Topic: {topic}")
-        print(f"  Group ID: {group_id}")
+        print(f"  Écriture dans: {self.hdfs_base}/date=YYYY-MM-DD/zone=Nom_Zone/")
     
-    def consume_continuous(self, max_events: int = None, verbose: bool = True):
-        """
-        Continuously consume messages from Kafka
-        """
+    def consume_and_write(self, max_events: int = None, verbose: bool = True):
         event_count = 0
+        batch = []
+        batch_size = 50  # Écriture par batch de 50 événements
         
         print("\n" + "="*80)
-        print(" Starting Traffic Data Consumption from Kafka")
+        print(" DÉBUT DE L'INGESTION : Kafka → HDFS Raw Zone")
         print("="*80)
-        print(f"  Topic: {self.topic}")
-        print(f"  Max events: {max_events or 'unlimited'}")
-        print("="*80 + "\n")
         
         try:
             for message in self.consumer:
@@ -69,94 +60,88 @@ class TrafficKafkaConsumer:
                 event_count += 1
                 event = message.value
                 
-                # Display event
                 if verbose or event_count <= 10 or event_count % 50 == 0:
-                    print(f"\n[Event #{event_count}] 📨 Received")
-                    print(f"  Partition: {message.partition}")
-                    print(f"  Offset: {message.offset}")
-                    print(f"  Key: {message.key}")
-                    print(f"  Timestamp: {datetime.fromtimestamp(message.timestamp/1000)}")
-                    print(f"  ---")
-                    print(f"  Sensor: {event['sensor_id']}")
-                    print(f"  Road: {event['road_id']} ({event['road_type']})")
-                    print(f"  Zone: {event['zone']}")
-                    print(f"  Vehicles: {event['vehicle_count']}")
-                    print(f"  Speed: {event['average_speed']} km/h")
-                    print(f"  Occupancy: {event['occupancy_rate']}%")
+                    print(f"\n[Événement #{event_count}] Reçu et écrit dans HDFS")
+                    print(f"  Partition: {message.partition} | Offset: {message.offset}")
+                    print(f"  Zone: {event['zone']} | Véhicules: {event['vehicle_count']} | Vitesse: {event['average_speed']} km/h")
                 
-                # Statistics every 100 events
+                # === GESTION ROBUSTE DE event_time (clé pour éviter les NULL dans Spark) ===
+                event_time_str = event['event_time']
+                try:
+                    if 'T' in event_time_str:
+                        # Format ISO avec ou sans millisecondes : "2026-01-05T12:29:40.123" ou "2026-01-05T12:29:40"
+                        clean_time = event_time_str.split('.')[0]  # enlève les millisecondes
+                        event_time = datetime.fromisoformat(clean_time.replace('T', ' '))
+                    else:
+                        # Format classique : "2026-01-05 12:29:40"
+                        event_time = datetime.strptime(event_time_str, "%Y-%m-%d %H:%M:%S")
+                except Exception as e:
+                    print(f"Erreur parsing date '{event_time_str}': {e} → date actuelle utilisée")
+                    event_time = datetime.now()
+                
+                date = event_time.strftime("%Y-%m-%d")
+                zone = event['zone'].replace(" ", "_").replace("-", "_")
+                partition_path = f"{self.hdfs_base}/date={date}/zone={zone}"
+                
+                batch.append(json.dumps(event))
+                
+                # Écriture par batch
+                if len(batch) >= batch_size:
+                    subprocess.run(["docker", "exec", "namenode", "hdfs", "dfs", "-mkdir", "-p", partition_path], check=False)
+                    
+                    data = "\n".join(batch) + "\n"
+                    cmd = f"echo \"{data}\" | docker exec -i namenode hdfs dfs -put - {partition_path}/part-{event_count//batch_size:05d}.jsonl"
+                    os.system(cmd)
+                    
+                    if verbose:
+                        print(f"Écrit {len(batch)} événements → {partition_path}")
+                    
+                    batch = []
+                
                 if event_count % 100 == 0:
-                    print("\n" + "="*80)
-                    print(f"📊 Consumed {event_count} events so far...")
-                    print(f"  Time: {datetime.now().strftime('%H:%M:%S')}")
-                    print("="*80 + "\n")
-                
+                    print(f"{event_count} événements consommés et écrits dans HDFS...")
+        
         except KeyboardInterrupt:
-            print("\n\n  Stopping consumer (Ctrl+C detected)...")
+            print("\n\nArrêt du consumer (Ctrl+C)...")
         
         finally:
-            print("\n" + "="*80)
-            print("📈 Final Statistics")
-            print("="*80)
-            print(f"  Total events consumed: {event_count}")
-            print("="*80)
+            # Écriture du dernier batch
+            if batch:
+                event_time = datetime.now()
+                date = event_time.strftime("%Y-%m-%d")
+                zone = "Unknown"
+                partition_path = f"{self.hdfs_base}/date={date}/zone={zone}"
+                subprocess.run(["docker", "exec", "namenode", "hdfs", "dfs", "-mkdir", "-p", partition_path], check=False)
+                data = "\n".join(batch) + "\n"
+                cmd = f"echo \"{data}\" | docker exec -i namenode hdfs dfs -put - {partition_path}/final-batch.jsonl"
+                os.system(cmd)
+                print(f"Écrit dernier batch ({len(batch)} événements) dans HDFS")
             
-            print("\n Closing Kafka consumer...")
+            print("\n" + "="*80)
+            print(f"INGESTION TERMINÉE : {event_count} événements écrits dans HDFS Raw Zone")
+            print("="*80)
             self.consumer.close()
-            print("✓ Consumer closed successfully\n")
-
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Kafka Consumer for Smart City Traffic Data"
-    )
-    parser.add_argument(
-        '--bootstrap-servers',
-        default='localhost:9092',
-        help='Kafka bootstrap servers (default: localhost:9092)'
-    )
-    parser.add_argument(
-        '--topic',
-        default='traffic-events',
-        help='Kafka topic name (default: traffic-events)'
-    )
-    parser.add_argument(
-        '--group-id',
-        default='traffic-consumer-group',
-        help='Consumer group ID (default: traffic-consumer-group)'
-    )
-    parser.add_argument(
-        '--max-events',
-        type=int,
-        help='Maximum number of events to consume (default: unlimited)'
-    )
-    parser.add_argument(
-        '--quiet',
-        action='store_true',
-        help='Show only summary statistics'
-    )
+    parser = argparse.ArgumentParser(description="Kafka Consumer → HDFS Raw Zone (Étape 3)")
+    parser.add_argument('--bootstrap-servers', default='localhost:9092')
+    parser.add_argument('--topic', default='traffic-events')
+    parser.add_argument('--group-id', default='hdfs-writer-group')
+    parser.add_argument('--max-events', type=int, help='Arrêter après N événements')
+    parser.add_argument('--quiet', action='store_true', help='Moins verbeux')
     
     args = parser.parse_args()
     
-    try:
-        consumer = TrafficKafkaConsumer(
-            bootstrap_servers=args.bootstrap_servers,
-            topic=args.topic,
-            group_id=args.group_id
-        )
-        
-        consumer.consume_continuous(
-            max_events=args.max_events,
-            verbose=not args.quiet
-        )
-            
-    except KeyboardInterrupt:
-        print("\n  Interrupted by user")
-        sys.exit(0)
-    except Exception as e:
-        print(f"\n Error: {e}")
-        sys.exit(1)
-
+    consumer = TrafficKafkaConsumerHDFS(
+        bootstrap_servers=args.bootstrap_servers,
+        topic=args.topic,
+        group_id=args.group_id
+    )
+    
+    consumer.consume_and_write(
+        max_events=args.max_events,
+        verbose=not args.quiet
+    )
 
 if __name__ == "__main__":
     main()

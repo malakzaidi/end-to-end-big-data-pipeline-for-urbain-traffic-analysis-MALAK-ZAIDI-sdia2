@@ -138,7 +138,7 @@ class TrafficKafkaProducer:
                     elapsed = time.time() - start_time
                     rate = event_count / elapsed if elapsed > 0 else 0
                     print("\n" + "="*80)
-                    print(f"📊 Statistics")
+                    print(f" Statistics")
                     print(f"  Total events sent: {event_count}")
                     print(f"  Failed: {failed_count}")
                     print(f"  Rate: {rate:.2f} events/sec")
@@ -158,7 +158,7 @@ class TrafficKafkaProducer:
         finally:
             # Cleanup
             print("\n" + "="*80)
-            print("📈 Final Statistics")
+            print(" Final Statistics")
             print("="*80)
             elapsed = time.time() - start_time
             print(f"  Total events sent: {event_count}")
@@ -168,7 +168,7 @@ class TrafficKafkaProducer:
             print(f"  Total time: {elapsed:.2f}s")
             print("="*80)
             
-            print("\n🔄 Closing Kafka producer...")
+            print("\n Closing Kafka producer...")
             self.producer.close()
             print("✓ Producer closed successfully\n")
 

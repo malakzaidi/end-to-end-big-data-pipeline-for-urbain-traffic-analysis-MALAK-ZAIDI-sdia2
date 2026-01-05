@@ -1,5 +1,6 @@
+
 services:
-  # Kafka
+  # Kafka (single node KRaft)
   kafka:
     image: confluentinc/cp-kafka:latest
     container_name: kafka
@@ -30,8 +31,8 @@ services:
     container_name: namenode
     restart: always
     ports:
-      - "9870:9870"  # Web UI
-      - "9000:9000"  # HDFS port
+      - "9870:9870"
+      - "9000:9000"
     volumes:
       - namenode-data:/hadoop/dfs/name
     environment:
@@ -60,10 +61,105 @@ services:
     networks:
       - bigdata-network
 
+  # Spark Master (custom avec visualisations)
+  spark-master:
+    build: .
+    container_name: spark-master
+    ports:
+      - "8090:8080"   # UI Spark
+      - "7077:7077"   # Master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    volumes:
+      - ./scripts:/opt/spark/scripts
+    networks:
+      - bigdata-network
+    depends_on:
+      - namenode
+      - datanode
+
+  # Spark Worker
+  spark-worker:
+    build: .
+    container_name: spark-worker
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+    networks:
+      - bigdata-network
+    depends_on:
+      - spark-master
+
+  # Apache Airflow (orchestration étape 7)
+  airflow-postgres:
+    image: postgres:13
+    container_name: airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - bigdata-network
+
+  airflow-webserver:
+    image: apache/airflow:2.9.3
+    container_name: airflow-webserver
+    restart: always
+    depends_on:
+      - airflow-postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      _PIP_ADDITIONAL_REQUIREMENTS: apache-airflow-providers-apache-spark
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+    ports:
+      - "8081:8080"
+    command: webserver
+    networks:
+      - bigdata-network
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.3
+    container_name: airflow-scheduler
+    restart: always
+    depends_on:
+      - airflow-postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      _PIP_ADDITIONAL_REQUIREMENTS: apache-airflow-providers-apache-spark
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+    command: scheduler
+    networks:
+      - bigdata-network
+
+  # Grafana (dashboards étape 6)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - bigdata-network
+
 volumes:
   kafka-data:
   namenode-data:
   datanode-data:
+  postgres-data:
+  grafana-data:
 
 networks:
   bigdata-network:
