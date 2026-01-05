@@ -14,7 +14,7 @@ import argparse
 import sys
 
 # Import your traffic generator
-from traffic_generator import TrafficDataGenerator
+from traffic_data_generator import TrafficDataGenerator
 
 
 class TrafficKafkaProducer:
