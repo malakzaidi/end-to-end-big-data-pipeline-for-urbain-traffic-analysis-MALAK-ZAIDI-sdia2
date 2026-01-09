@@ -1,0 +1,18 @@
+# grafana/provisioning/datasources/mysql.yml
+apiVersion: 1
+
+datasources:
+  - name: MySQL Traffic
+    type: mysql
+    access: proxy
+    url: mysql-superset:3306
+    database: superset
+    user: superset
+    secureJsonData:
+      password: "superset"
+    jsonData:
+      maxOpenConns: 100
+      maxIdleConns: 100
+      connMaxLifetime: 14400
+      tlsAuth: false
+      tlsAuthWithCACert: false
