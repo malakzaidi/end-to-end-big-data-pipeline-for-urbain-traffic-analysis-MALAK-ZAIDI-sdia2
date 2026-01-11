@@ -305,12 +305,12 @@ def export_to_mysql(dataframes):
         
         # Créer d'abord les tables
         create_mysql_tables()
-        
+
         conn = mysql.connector.connect(
-            host="mysql-superset",
-            user="superset",
-            password="superset",
-            database="superset",
+            host="mysql-traffic",
+            user="grafana",
+            password="grafana",
+            database="traffic_db",
             connect_timeout=10
         )
         
@@ -398,10 +398,10 @@ def create_mysql_tables():
     
     try:
         conn = mysql.connector.connect(
-            host="mysql-superset",
-            user="superset",
-            password="superset",
-            database="superset",
+            host="mysql-traffic",
+            user="grafana",
+            password="grafana",
+            database="traffic_db",
             connect_timeout=10
         )
         

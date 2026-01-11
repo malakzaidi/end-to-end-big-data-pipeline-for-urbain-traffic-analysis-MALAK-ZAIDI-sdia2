@@ -5,11 +5,11 @@ datasources:
   - name: MySQL Traffic
     type: mysql
     access: proxy
-    url: mysql-superset:3306
-    database: superset
-    user: superset
+    url: mysql-traffic:3306
+    database: traffic_db
+    user: grafana
     secureJsonData:
-      password: "superset"
+      password: "grafana"
     jsonData:
       maxOpenConns: 100
       maxIdleConns: 100
