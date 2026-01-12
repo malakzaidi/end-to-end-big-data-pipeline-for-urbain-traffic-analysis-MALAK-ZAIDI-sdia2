@@ -1,4 +1,10 @@
-# Smart City Traffic Data Pipeline - Étape 1: Collecte des Données
+# Smart City Traffic Data Pipeline 
+
+<img width="1264" height="827" alt="image" src="https://github.com/user-attachments/assets/63d17691-8083-48af-8f7c-b2fc20868415" />
+
+
+
+- Étape 1: Collecte des Données
 
 ##  Vue d'ensemble
 
