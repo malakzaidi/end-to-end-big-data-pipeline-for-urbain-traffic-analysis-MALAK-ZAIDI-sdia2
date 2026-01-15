@@ -3,6 +3,7 @@
 ## Overview
 
 In the context of Smart Cities, this project implements a complete Big Data pipeline for urban traffic analysis and intelligent mobility management. The system collects real-time traffic data from simulated urban sensors, processes it through a streaming pipeline, and produces actionable insights for urban decision-making.
+![alt text](image.png)
 
 ## Business Objectives
 
