@@ -141,26 +141,32 @@ class TrafficDataGenerator:
         print(f" Batch size: {batch_size}")
         print(f" Interval: {interval}s")
         print(f" Saving events to: {output_file}")
+        if max_events:
+            print(f" Max events: {max_events}")
         print("=" * 80)
 
-        # Ouvre le fichier en append pour écrire au fur et à mesure
-        with open(output_file, "a", encoding="utf-8") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             try:
                 while True:
                     if max_events and event_count >= max_events:
+                        print(f"\nMaximum events reached: {max_events}")
                         break
 
-                    batch = self.generate_batch(batch_size)
+                    if max_events:
+                        remaining = max_events - event_count
+                        current_batch_size = min(batch_size, remaining)
+                    else:
+                        current_batch_size = batch_size
+
+                    batch = self.generate_batch(current_batch_size)
 
                     for event in batch:
                         event_count += 1
 
-                        # Console output
                         if event_count <= 10 or event_count % 100 == 0:
                             print(f"\n[Event #{event_count}]")
                             print(json.dumps(event, indent=2))
 
-                        # Write JSON Lines
                         f.write(json.dumps(event, ensure_ascii=False) + "\n")
                         f.flush()
 
@@ -169,12 +175,18 @@ class TrafficDataGenerator:
                         print(f" Generated {event_count} events so far...")
                         print(f" Time: {datetime.now().strftime('%H:%M:%S')}")
                         print(f" Traffic factor: {self._get_time_factor():.2f}")
+                        if max_events:
+                            print(f" Progress: {event_count}/{max_events} ({100*event_count/max_events:.1f}%)")
                         print("=" * 80)
 
-                    time.sleep(interval)
+                    if max_events and event_count >= max_events:
+                        break
+
+                    if interval > 0:
+                        time.sleep(interval)
 
             except KeyboardInterrupt:
-                print("\n Generation stopped by user")
+                print("\nGeneration stopped by user")
 
         print("=" * 80)
         print(" Summary")
