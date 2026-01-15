@@ -1,8 +1,11 @@
 # End-to-End Big Data Pipeline for Urban Traffic Analysis and Smart Mobility
 
+![alt text](screenshots/geographic-density-heatmao.png)
+
 ## Overview
 
 In the context of Smart Cities, this project implements a complete Big Data pipeline for urban traffic analysis and intelligent mobility management. The system collects real-time traffic data from simulated urban sensors, processes it through a streaming pipeline, and produces actionable insights for urban decision-making.
+
 ![alt text](image.png)
 
 ## Business Objectives
