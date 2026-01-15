@@ -1,4 +1,4 @@
-# Pipeline Big Data End-to-End pour l'Analyse du Trafic Urbain et de la Mobilité Intelligente
+# Smart City Traffic Data Pipeline - Étape 1: Collecte des Données
 
 ## Vue d'ensemble
 
