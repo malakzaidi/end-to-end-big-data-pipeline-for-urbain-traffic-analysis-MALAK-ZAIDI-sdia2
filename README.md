@@ -1,23 +1,23 @@
-# Smart City Traffic Data Pipeline - Étape 1: Collecte des Données
+# End-to-End Big Data Pipeline for Urban Traffic Analysis and Smart Mobility
 
-## Vue d'ensemble
+## Overview
 
-Dans le cadre des Smart Cities, ce projet implémente un pipeline Big Data complet pour l'analyse du trafic urbain et la gestion intelligente de la mobilité. Le système collecte des données de trafic en temps réel depuis des capteurs urbains simulés, les traite via un pipeline streaming, et produit des insights exploitables pour la prise de décision urbaine.
+In the context of Smart Cities, this project implements a complete Big Data pipeline for urban traffic analysis and intelligent mobility management. The system collects real-time traffic data from simulated urban sensors, processes it through a streaming pipeline, and produces actionable insights for urban decision-making.
 
-## Objectifs Métier
+## Business Objectives
 
-La municipalité souhaite disposer d'un système permettant de :
-- Suivre le niveau de trafic en temps réel
-- Identifier les zones congestionnées
-- Analyser le trafic par zone, période et type de voie
-- Exploiter les données pour la prise de décision urbaine
+The municipality wants a system that allows:
+- Real-time traffic level monitoring
+- Identification of congested zones
+- Traffic analysis by zone, period, and road type
+- Data exploitation for urban decision-making
 
-## Architecture Générale
+## General Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Génération    │ -> │     Kafka       │ -> │      HDFS       │
-│   de Données    │    │   Streaming     │    │   Data Lake     │
+│   Data          │ -> │     Kafka       │ -> │      HDFS       │
+│   Generation    │    │   Streaming     │    │   Data Lake     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                                                          │
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -27,61 +27,61 @@ La municipalité souhaite disposer d'un système permettant de :
                                                          │
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Airflow       │ -> │   Orchestration │ -> │   Monitoring    │
-│   DAGs          │    │   & Scheduling  │    │   & Alertes     │
+│   DAGs          │    │   & Scheduling  │    │   & Alerts      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-## Technologies Utilisées
+## Technologies Used
 
-- **Apache Kafka** : Ingestion temps réel des données
-- **Apache Spark** : Traitement et analyse des données
-- **HDFS** : Stockage distribué (Data Lake)
-- **Apache Airflow** : Orchestration du pipeline
-- **Grafana** : Visualisation et dashboards
-- **MySQL** : Base de données analytique
-- **Docker** : Conteneurisation et déploiement
-- **Python** : Scripts et génération de données
+- **Apache Kafka**: Real-time data ingestion
+- **Apache Spark**: Data processing and analysis
+- **HDFS**: Distributed storage (Data Lake)
+- **Apache Airflow**: Pipeline orchestration
+- **Grafana**: Visualization and dashboards
+- **MySQL**: Analytical database
+- **Docker**: Containerization and deployment
+- **Python**: Scripts and data generation
 
-## Prérequis
+## Prerequisites
 
 - Docker & Docker Compose
 - Python 3.6+
 - 8GB RAM minimum
-- Ports 8080-8082, 3000, 9870 disponibles
+- Ports 8080-8082, 3000, 9870 available
 
-## Installation et Configuration
+## Installation and Setup
 
-### 1. Clonage du Repository
+### 1. Repository Cloning
 
 ```bash
 git clone <repository-url>
 cd bigdata-project
 ```
 
-### 2. Démarrage de l'Infrastructure
+### 2. Infrastructure Startup
 
 ```bash
-# Lancement de tous les services
+# Launch all services
 docker-compose up -d
 
-# Vérification du statut
+# Check status
 docker-compose ps
 ```
 
-### 3. Accès aux Interfaces
+### 3. Access Interfaces
 
-- **Airflow UI** : http://localhost:8080 (admin/admin)
-- **Grafana** : http://localhost:3000 (admin/admin)
-- **HDFS Namenode** : http://localhost:9870
-- **Kafka** : localhost:9092
+- **Airflow UI**: http://localhost:8080 (admin/admin)
+- **Grafana**: http://localhost:3000 (admin/admin)
+- **HDFS Namenode**: http://localhost:9870
+- **Kafka**: localhost:9092
 
-## Étapes du Pipeline
+## Pipeline Steps
 
-### Étape 1 : Collecte des Données (Data Collection)
+### Step 1: Data Collection
 
-**Objectif** : Simuler un réseau de capteurs urbains générant des événements de trafic en temps réel.
+**Objective**: Simulate a network of urban sensors generating real-time traffic events.
 
-**Structure des données** :
+**Data Structure**:
 ```json
 {
   "sensor_id": "SENSOR_0001",
@@ -95,55 +95,55 @@ docker-compose ps
 }
 ```
 
-**Utilisation** :
+**Usage**:
 ```bash
-# Génération en mode démo
+# Demo mode generation
 python3 scripts/traffic_data_generator.py --demo
 
-# Génération continue
+# Continuous generation
 python3 scripts/traffic_data_generator.py --output traffic_events.json
 ```
 
-**Screenshots Étape 1** :
-![Démarrage des services Docker pour la génération de données](screenshots/step1-docker-ps-pulling.png)
-*Figure 1.1 : Pull des images Docker nécessaires au démarrage du système de génération de données*
+**Step 1 Screenshots**:
+![Docker Services Startup for Data Generation](screenshots/step1-docker-ps-pulling.png)
+*Figure 1.1: Pulling Docker images needed to start the data generation system*
 
-### Étape 2 : Ingestion des Données (Data Ingestion)
+### Step 2: Data Ingestion
 
-**Objectif** : Ingestion streaming avec Apache Kafka.
+**Objective**: Real-time ingestion using Apache Kafka.
 
-**Configuration** :
-- Topic : `traffic-events`
-- Partitionnement : Par zone géographique
-- Fréquence : 10 événements par seconde
+**Configuration**:
+- Topic: `traffic-events`
+- Partitioning: By geographical zone
+- Frequency: 10 events per second
 
-**Commandes** :
+**Commands**:
 ```bash
-# Lancement du producer
+# Launch producer
 python3 scripts/scripts/kafka-producer.py
 
-# Test du consumer
+# Test consumer
 python3 scripts/scripts/kafka-consumer.py
 ```
 
-**Screenshots Étape 2** :
-![Exécution du Producer Kafka](screenshots/kafka-producer-execution.png)
-*Figure 2.1 : Producer Kafka envoyant des événements de trafic au topic traffic-events*
+**Step 2 Screenshots**:
+![Kafka Producer Execution](screenshots/kafka-producer-execution.png)
+*Figure 2.1: Kafka producer sending traffic events to traffic-events topic*
 
-![Exécution du Producer Kafka (vue 2)](screenshots/kafka-producer-execution2.png)
-*Figure 2.2 : Continuation de l'exécution du producer avec statistiques d'envoi*
+![Kafka Producer Execution (View 2)](screenshots/kafka-producer-execution2.png)
+*Figure 2.2: Producer execution continuation with sending statistics*
 
-![Exécution du Consumer Kafka](screenshots/kafka-consumer.execution.png)
-*Figure 2.3 : Consumer Kafka consommant les messages du topic traffic-events*
+![Kafka Consumer Execution](screenshots/kafka-consumer.execution.png)
+*Figure 2.3: Kafka consumer consuming messages from traffic-events topic*
 
-![Exécution du Consumer Kafka (vue 2)](screenshots/kafka-consumer-execution2.png)
-*Figure 2.4 : Consumer affichant les événements reçus avec détails complets*
+![Kafka Consumer Execution (View 2)](screenshots/kafka-consumer-execution2.png)
+*Figure 2.4: Consumer displaying received events with full details*
 
-### Étape 3 : Stockage des Données Brutes (Data Lake - Raw Zone)
+### Step 3: Raw Data Storage (Data Lake - Raw Zone)
 
-**Objectif** : Stockage dans HDFS comme Data Lake.
+**Objective**: Storage in HDFS as Data Lake.
 
-**Structure HDFS** :
+**HDFS Structure**:
 ```
 /data/raw/traffic/
 ├── zone=Centre-Ville/
@@ -151,306 +151,325 @@ python3 scripts/scripts/kafka-consumer.py
 └── ...
 ```
 
-**Commandes** :
+**Commands**:
 ```bash
-# Vérification HDFS
+# HDFS verification
 docker exec namenode hdfs dfs -ls /data/raw/traffic
 ```
 
-**Screenshots Étape 3** :
-![Interface Web HDFS Namenode](screenshots/hdfs-9870-verif.png)
-*Figure 3.1 : Interface Web HDFS Namenode montrant l'état du cluster*
+**Step 3 Screenshots**:
+![HDFS Namenode Web Interface](screenshots/hdfs-9870-verif.png)
+*Figure 3.1: HDFS Namenode web interface showing cluster status*
 
-![Vérification des données traitées dans HDFS](screenshots/hdfs-data-processed.png)
-*Figure 3.2 : Structure des données traitées stockées dans HDFS*
+![Processed Data Verification in HDFS](screenshots/hdfs-data-processed.png)
+*Figure 3.2: Structure of processed data stored in HDFS*
 
-![Visualisation des données dans HDFS](screenshots/hdfs-data-visual.png)
-*Figure 3.3 : Visualisation des fichiers de données dans l'interface HDFS*
+![Data Visualization in HDFS](screenshots/hdfs-data-visual.png)
+*Figure 3.3: Visualization of data files in HDFS interface*
 
-![Données curatées dans HDFS](screenshots/hdfs-data.curated.png)
-*Figure 3.4 : Données curatées organisées par partitions dans HDFS*
+![Curated Data in HDFS](screenshots/hdfs-data.curated.png)
+*Figure 3.4: Curated data organized by partitions in HDFS*
 
-![Utilitaires HDFS - Raw, Processed et Curated](screenshots/hdfs-utilities-curated-processed-raw.png)
-*Figure 3.5 : Vue d'ensemble des zones raw, processed et curated dans HDFS*
+![HDFS Utilities - Raw, Processed and Curated](screenshots/hdfs-utilities-curated-processed-raw.png)
+*Figure 3.5: Overview of raw, processed and curated zones in HDFS*
 
-![Vérification générale HDFS](screenshots/hdfs-verification.png)
-*Figure 3.6 : Vérification de l'intégrité des données dans HDFS*
+![General HDFS Verification](screenshots/hdfs-verification.png)
+*Figure 3.6: General verification of data integrity in HDFS*
 
-![Vérification HDFS 2](screenshots/hdfs-verification2.png)
-*Figure 3.7 : Seconde vérification montrant l'organisation des données*
+![HDFS Verification 2](screenshots/hdfs-verification2.png)
+*Figure 3.7: Second verification showing data organization*
 
-![Vérification HDFS exécution 3](screenshots/hdfs-verification.execution3.png)
-*Figure 3.8 : Résultats de vérification après traitement des données*
+![HDFS Verification Execution 3](screenshots/hdfs-verification.execution3.png)
+*Figure 3.8: Results of verification after data processing*
 
-![Data Lake HDFS Étape 3](screenshots/datalake-hdfs-etape3.png)
-*Figure 3.9 : Vue complète du Data Lake HDFS à l'étape 3*
+![Data Lake HDFS Step 3](screenshots/datalake-hdfs-etape3.png)
+*Figure 3.9: Complete Data Lake HDFS view at step 3*
 
-![Installation HDFS](screenshots/install-hdfs.png)
-*Figure 3.10 : Processus d'installation et configuration HDFS*
+![HDFS Installation](screenshots/install-hdfs.png)
+*Figure 3.10: HDFS installation and configuration process*
 
-![Vérification de connexion HDFS](screenshots/verification-connection.hdfs.png)
-*Figure 3.11 : Test de connectivité avec le cluster HDFS*
+![HDFS Connection Verification](screenshots/verification-connection.hdfs.png)
+*Figure 3.11: HDFS cluster connectivity test*
 
-### Étape 4 : Traitement des Données (Data Processing)
+### Step 4: Data Processing
 
-**Objectif** : Traitement avec Apache Spark pour calculer les KPI.
+**Objective**: Processing with Apache Spark to calculate KPIs.
 
-**Calculs effectués** :
-- Trafic moyen par zone
-- Vitesse moyenne par route
-- Taux de congestion par période
+**Calculations Performed**:
+- Average traffic by zone
+- Average speed by road
+- Congestion rate by period
 
-**Commandes** :
+**Commands**:
 ```bash
-# Traitement Spark
+# Spark processing
 docker exec spark-master /opt/spark/bin/spark-submit \
   --master spark://spark-master:7077 \
   scripts/traffic_processor.py
 ```
 
-**Screenshots Étape 4** :
-![Construction de l'image Docker Apache Spark](screenshots/apache-spark-docker-build.png)
-*Figure 4.1 : Construction de l'image Docker pour Apache Spark*
+**Step 4 Screenshots**:
+![Apache Spark Docker Image Build](screenshots/apache-spark-docker-build.png)
+*Figure 4.1: Building Docker image for Apache Spark*
 
-![Logs du Datanode Apache Spark](screenshots/docker-logs-datanode-apache-spark.png)
-*Figure 4.2 : Logs du datanode Spark pendant le traitement*
+![Apache Spark Datanode Logs](screenshots/docker-logs-datanode-apache-spark.png)
+*Figure 4.2: Datanode logs during Spark processing*
 
-![Logs du Namenode Apache Spark](screenshots/docker-logs-namenode-apache-spark.png)
-*Figure 4.3 : Logs du namenode Spark montrant l'activité du cluster*
+![Apache Spark Namenode Logs](screenshots/docker-logs-namenode-apache-spark.png)
+*Figure 4.3: Namenode logs showing Spark cluster activity*
 
-![Début du traitement des données](screenshots/processing-data-start.png)
-*Figure 4.4 : Initialisation du traitement Spark des données de trafic*
+![Data Processing Start](screenshots/processing-data-start.png)
+*Figure 4.4: Spark processing initialization of traffic data*
 
-![Traitement des données (vue 2)](screenshots/processing2.png)
-*Figure 4.5 : Continuation du traitement avec calcul des métriques*
+![Data Processing (View 2)](screenshots/processing2.png)
+*Figure 4.5: Calculation of metrics by zone*
 
-![Traitement des données (vue 3)](screenshots/processing3.png)
-*Figure 4.6 : Calcul des KPIs de trafic par zone*
+![Data Processing (View 3)](screenshots/processing3.png)
+*Figure 4.6: KPI calculation by traffic zone*
 
-![Traitement des données (vue 4)](screenshots/processing4.png)
-*Figure 4.7 : Finalisation du traitement et sauvegarde des résultats*
+![Data Processing (View 4)](screenshots/processing4.png)
+*Figure 4.7: Processing completion and result saving*
 
-### Étape 5 : Structuration Analytique (Analytics Zone)
+### Step 5: Analytical Structuring (Analytics Zone)
 
-**Objectif** : Sauvegarde en format Parquet pour analytics.
+**Objective**: Save in Parquet format for analytics.
 
-**Structure** :
+**Structure**:
 ```
 /data/analytics/traffic/
 ├── date=2026-01-01/
 └── ...
 ```
 
-**Screenshots Étape 5** :
-![Vérification de la zone analytics HDFS étape 5](screenshots/hdfs-analytics-verif-step5.png)
-*Figure 5.1 : Vérification de la structure de la zone analytics avec fichiers Parquet*
+**Step 5 Screenshots**:
+![HDFS Analytics Zone Verification Step 5](screenshots/hdfs-analytics-verif-step5.png)
+*Figure 5.1: Verification of analytics zone structure with Parquet files*
 
-### Étape 6 : Exploitation et Visualisation
+### Step 6: Exploitation and Visualization
 
-**Objectif** : Dashboards Grafana pour visualisation temps réel.
+**Objective**: Grafana dashboards for real-time visualization.
 
-**KPIs définis** :
-- Trafic par zone
-- Vitesse moyenne
-- Taux de congestion
-- Évolution temporelle
+**Defined KPIs**:
+- Traffic by zone
+- Average speed
+- Congestion rate
+- Time evolution
 
-**Screenshots Étape 6** :
-![KPI de congestion](screenshots/kpi-congestion.png)
-*Figure 6.1 : Visualisation des niveaux de congestion par zone dans Grafana*
+**Step 6 Screenshots**:
+![Congestion KPI](screenshots/kpi-congestion.png)
+*Figure 6.1: Congestion level visualization by zone in Grafana*
 
-![KPI de trafic](screenshots/kpi-traffic.png)
-*Figure 6.2 : Dashboard montrant les métriques de trafic global*
+![Traffic KPI](screenshots/kpi-traffic.png)
+*Figure 6.2: Global traffic metrics dashboard*
 
-![Exécution des KPIs étape 6](screenshots/kpi-execution3.png)
-*Figure 6.3 : Résultats de calcul des KPIs de mobilité*
+![KPIs Execution Step 6](screenshots/kpi-execution3.png)
+*Figure 6.3: Mobility KPIs calculation results*
 
-![Analyse par zone](screenshots/analyse-par-zone.png)
-*Figure 6.4 : Analyse détaillée du trafic par zone géographique*
+![Zone Analysis](screenshots/analyse-par-zone.png)
+*Figure 6.4: Detailed traffic analysis by geographical zone*
 
-![Distribution par type de route](screenshots/distribution-par-type-route.png)
-*Figure 6.5 : Répartition du trafic selon les types de routes*
+![Distribution by Road Type](screenshots/distribution-par-type-route.png)
+*Figure 6.5: Traffic distribution by road types*
 
-![Routes avec problèmes de congestion](screenshots/routes-problemes-congestion.png)
-*Figure 6.6 : Identification des routes critiques avec congestion élevée*
+![Routes with Congestion Problems](screenshots/routes-problemes-congestion.png)
+*Figure 6.6: Identification of critical routes with high congestion*
 
-![Top 5 routes performantes](screenshots/top5-routes-performantes.png)
-*Figure 6.7 : Classement des 5 routes les plus performantes*
+![Top 5 Performing Routes](screenshots/top5-routes-performantes.png)
+*Figure 6.7: Ranking of 5 best performing routes*
 
-![Zones prioritaires](screenshots/zones-prioritaires.png)
-*Figure 6.8 : Cartographie des zones nécessitant une attention prioritaire*
+![Priority Zones](screenshots/zones-prioritaires.png)
+*Figure 6.8: Mapping of zones requiring priority attention*
 
-![Préparation des tables Hive étape 6](screenshots/pre-step6-hivetables.png)
-*Figure 6.9 : Configuration des tables Hive pour l'analyse avancée*
+![Hive Tables Preparation Step 6](screenshots/pre-step6-hivetables.png)
+*Figure 6.9: Hive tables configuration for advanced analysis*
 
-![Congestion dans HDFS Analytics](screenshots/analytics-congestion-hdfs.png)
-*Figure 6.10 : Données de congestion stockées dans la zone analytics*
+![Congestion Data in HDFS Analytics](screenshots/analytics-congestion-hdfs.png)
+*Figure 6.10: Congestion data stored in analytics zone*
 
-![Données de trafic analytics](screenshots/analytics-traffic-data.png)
-*Figure 6.11 : Métriques de trafic dans la zone analytique*
+![Traffic Data Analytics](screenshots/analytics-traffic-data.png)
+*Figure 6.11: Traffic metrics in analytical zone*
 
-![Vérification analytics étape 6](screenshots/analytics-verif6.png)
-*Figure 6.12 : Vérification des données analytics après traitement*
+![Analytics Verification 6](screenshots/analytics-verif6.png)
+*Figure 6.12: Verification of analytics data after processing*
 
-![Analytics par zone 1](screenshots/analytics-zone1.png)
-*Figure 6.13 : Analyse détaillée de la zone 1*
+![Analytics Zone 1](screenshots/analytics-zone1.png)
+*Figure 6.13: Detailed analysis of zone 1*
 
 ![Analytics 2](screenshots/analytics2.png)
-*Figure 6.14 : Deuxième vue des analytics de trafic*
+*Figure 6.14: Second view of traffic analytics*
 
 ![Analytics 3](screenshots/analytics3.png)
-*Figure 6.15 : Métriques avancées de trafic urbain*
+*Figure 6.15: Advanced traffic metrics*
 
 ![Analytics 4](screenshots/analytics4.png)
-*Figure 6.16 : Analyse comparative des indicateurs*
+*Figure 6.16: Comparative analysis of indicators*
 
 ![Analytics 6](screenshots/analytics6.png)
-*Figure 6.17 : Résumé des analytics de mobilité*
+*Figure 6.17: Summary of mobility analytics*
 
-### Étape 7 : Orchestration du Pipeline
+![Geographic Density Heatmap](screenshots/geographic-density-heatmao.png)
+*Figure 6.18: Heatmap showing traffic density by geographical zone*
 
-**Objectif** : Automatisation complète avec Apache Airflow.
+![Grafana Visualization Metric 1](screenshots/grafana-visualisation-metric1.png)
+*Figure 6.19: Grafana Dashboard - Metric 1: Real-time traffic evolution*
 
-**DAG** : `smart_city_traffic_pipeline`
-- Ingestion Kafka
-- Traitement Spark
+![Grafana Visualization Metric 2](screenshots/grafana-visualisation-metric2.png)
+*Figure 6.20: Grafana Dashboard - Metric 2: Average speed by zone*
+
+![Grafana Visualization Metric 3](screenshots/grafana-visualisation-metric3.png)
+*Figure 6.21: Grafana Dashboard - Metric 3: Road occupancy rate*
+
+![Grafana Visualization Metric 4](screenshots/grafana-visualisation-metric4.png)
+*Figure 6.22: Grafana Dashboard - Metric 4: Congestion by hour*
+
+![Grafana Visualization Metric 5](screenshots/grafana-visualisation-metric5.png)
+*Figure 6.23: Grafana Dashboard - Metric 5: Road performance comparison*
+
+![Grafana Visualization Metric 6](screenshots/grafana-visualisation-metric6.png)
+*Figure 6.24: Grafana Dashboard - Metric 6: Seasonal traffic trends*
+
+### Step 7: Pipeline Orchestration
+
+**Objective**: Complete automation with Apache Airflow.
+
+**DAG**: `smart_city_traffic_pipeline`
+- Kafka ingestion
+- Spark processing
 - Validation
-- Nettoyage
+- Cleanup
 
-**Commandes** :
+**Commands**:
 ```bash
-# Activation du DAG
+# Activate DAG
 docker exec airflow-webserver airflow dags unpause smart_city_traffic_pipeline
 
-# Déclenchement manuel
+# Manual trigger
 docker exec airflow-webserver airflow dags trigger smart_city_traffic_pipeline
 ```
 
-**Screenshots Étape 7** :
-![Interface Airflow DAGs](screenshots/airflow-dags.png)
-*Figure 7.1 : Vue d'ensemble des DAGs dans Apache Airflow*
+**Step 7 Screenshots**:
+![Airflow DAGs Interface](screenshots/airflow-dags.png)
+*Figure 7.1: Overview of DAGs in Apache Airflow*
 
-![Airflow exécution 1](screenshots/airflow-ex1.png)
-*Figure 7.2 : Exécution du pipeline avec statut des tâches*
+![Airflow Execution 1](screenshots/airflow-ex1.png)
+*Figure 7.2: Pipeline execution with task status*
 
-![Airflow exécution 2](screenshots/airflow-ex2.png)
-*Figure 7.3 : Monitoring détaillé du DAG en cours d'exécution*
+![Airflow Execution 2](screenshots/airflow-ex2.png)
+*Figure 7.3: Detailed monitoring of running DAG*
 
-## Utilisation du Pipeline
+## Usage
 
-### Démarrage Complet
+### Complete Startup
 
 ```bash
 # 1. Infrastructure
 docker-compose up -d
 
-# 2. Pipeline Airflow
+# 2. Airflow pipeline
 docker exec airflow-webserver airflow dags unpause smart_city_traffic_pipeline
 docker exec airflow-webserver airflow dags trigger smart_city_traffic_pipeline
 
-# 3. Accès aux dashboards
+# 3. Access dashboards
 open http://localhost:3000
 ```
 
 ### Monitoring
 
-- **Airflow UI** : Suivi des tâches DAG
-- **Grafana** : KPIs et visualisations
-- **HDFS UI** : Stockage des données
+- **Airflow UI**: DAG task tracking
+- **Grafana**: KPIs and visualizations
+- **HDFS UI**: Data storage
 
+## Advanced Features
 
+### AI & Machine Learning
 
-## Fonctionnalités Avancées
+- **Predictive analysis**: ML models for traffic forecasting
+- **Anomaly detection**: Identification of unusual events
+- **Congestion classification**: Automatic severity levels
 
-### Intelligence Artificielle & Machine Learning
+### Real-Time Alerting System
 
-- **Prédiction du trafic** : Modèles ML pour prévision horaire
-- **Détection d'anomalies** : Identification des événements inhabituels
-- **Classification de congestion** : Niveaux automatiques de sévérité
+- **24/7 monitoring**: Continuous flux surveillance
+- **Multi-channel notifications**: Email, Slack, Webhooks
+- **Configurable thresholds**: Local condition adaptation
 
-### Système d'Alerte Temps Réel
+### Advanced Analytics
 
-- **Monitoring 24/7** : Surveillance continue des flux
-- **Notifications multi-canaux** : Email, Slack, Webhooks
-- **Seuils configurables** : Adaptation aux conditions locales
+- **Strategic KPIs**: Circulation efficiency, service levels
+- **Automated recommendations**: Route optimization
+- **Seasonal trends**: Detailed temporal analyses
 
-### Analytics Avancés
+### Professional Orchestration
 
-- **KPIs stratégiques** : Efficacité de circulation, niveaux de service
-- **Recommandations automatisées** : Optimisation des routes
-- **Tendances saisonnières** : Analyses temporelles détaillées
+- **Complete DAG pipeline**: End-to-end orchestration
+- **Error handling**: Automatic retry and notifications
+- **Integrated monitoring**: Performance dashboards
 
-### Orchestration Professionnelle
+### Performance Optimizations
 
-- **Pipeline DAG complet** : Orchestration end-to-end
-- **Gestion d'erreurs** : Retry automatique et notifications
-- **Monitoring intégré** : Tableaux de bord de performance
+- **Intelligent partitioning**: By zone, road type, period
+- **Adaptive compression**: Snappy for analytics, GZIP for archiving
+- **Automatic scaling**: Dynamic resource management
 
-### Optimisations Performance
+## Performance Metrics
 
-- **Partitionnement intelligent** : Par zone, type de route, période
-- **Compression adaptative** : Snappy pour analytics, GZIP pour archivage
-- **Scaling automatique** : Gestion dynamique des ressources
-
-## Métriques de Performance
-
-| Composant | Métrique | Valeur Cible | Valeur Atteinte |
-|-----------|----------|--------------|-----------------|
-| Prédiction | Précision | >80% | >85% |
-| Latence | Ingestion → Alerte | <30s | <15s |
-| Fiabilité | Uptime | 99.9% | 99.95% |
-| Scale | Événements/minute | 1000 | 5000+ |
+| Component | Metric | Target Value | Achieved Value |
+|-----------|--------|--------------|----------------|
+| Prediction | Precision | >80% | >85% |
+| Latency | Ingestion → Alert | <30s | <15s |
+| Reliability | Uptime | 99.9% | 99.95% |
+| Scale | Events/minute | 1000 | 5000+ |
 | Storage | Compression | 70% | 75% |
 
-## Tests des Fonctionnalités Avancées
+## Testing Advanced Features
 
 ```bash
-# Test des prédictions ML
+# Test ML predictions
 docker exec spark-master /opt/spark/bin/spark-submit \
   --master spark://spark-master:7077 \
   scripts/predictive_analytics.py
 
-# Test des alertes temps réel
+# Test real-time alerts
 python3 scripts/real_time_alerting.py --test
 
-# Génération de rapports
+# Generate reports
 python3 scripts/visualization/generate_reports.py
 ```
 
-## Dépannage
+## Troubleshooting
 
-### Problèmes Courants
+### Common Issues
 
-- **Ports occupés** : Vérifier que les ports 8080-8082, 3000, 9870 sont libres
-- **Mémoire insuffisante** : Assurer 8GB RAM minimum
-- **Permissions Docker** : Ajouter l'utilisateur au groupe docker
+- **Occupied ports**: Ensure ports 8080-8082, 3000, 9870 are free
+- **Insufficient memory**: Ensure 8GB RAM minimum
+- **Docker permissions**: Add user to docker group
 
-### Logs et Debugging
+### Logs and Debugging
 
 ```bash
-# Logs Airflow
+# Airflow logs
 docker logs airflow-webserver
 
-# Logs Spark
+# Spark logs
 docker logs spark-master
 
-# Logs Kafka
+# Kafka logs
 docker logs kafka
 ```
 
 ## Contribution
 
-1. Fork le projet
-2. Créer une branche feature
-3. Commiter les changements
-4. Push vers la branche
-5. Créer une Pull Request
+1. Fork the project
+2. Create a feature branch
+3. Commit changes
+4. Push to branch
+5. Create a Pull Request
 
-## Licence
+## License
 
-Ce projet est sous licence MIT.
+This project is under MIT license.
 
 ---
 
-**Projet** : Pipeline Big Data pour Analyse du Trafic Urbain  
-**Statut** : Pipeline Complet et Fonctionnel
+**Project**: Big Data Pipeline for Urban Traffic Analysis  
+**Status**: Complete and Functional Pipeline
